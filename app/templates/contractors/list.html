@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Contractors — Contractor Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Contractors</h2>
+    <span class="text-muted">{{ contractors | length }} total</span>
+</div>
+
+<!-- Search -->
+<div class="mb-3">
+    <div class="input-group" style="max-width: 400px;">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" id="contractorSearch" placeholder="Search contractors...">
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <table class="table table-clickable mb-0" id="contractorTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Trade</th>
+                    <th>Rate</th>
+                    <th>Active Jobs</th>
+                    <th>Total Paid</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in contractors %}
+                <tr onclick="window.location='/contractors/{{ c.id }}'">
+                    <td class="fw-semibold">{{ c.name }}</td>
+                    <td>
+                        <div>{{ c.contact_name }}</div>
+                        <small class="text-muted">{{ c.phone }}</small>
+                    </td>
+                    <td><span class="badge bg-{{ c.trade_badge_class }}">{{ c.trade }}</span></td>
+                    <td>{% if c.hourly_rate %}${{ "{:,.0f}".format(c.hourly_rate) }}/hr{% else %}Fixed bid{% endif %}</td>
+                    <td>
+                        {% if c.active_assignment_count > 0 %}
+                        <span class="badge bg-primary">{{ c.active_assignment_count }}</span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>${{ "{:,.0f}".format(c.total_paid) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('contractorSearch').addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('#contractorTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

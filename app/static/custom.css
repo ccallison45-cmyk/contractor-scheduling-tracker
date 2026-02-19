@@ -1,0 +1,184 @@
+/* Contractor Scheduling Tracker — Custom Styles */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
+}
+
+main {
+    flex: 1;
+}
+
+/* Summary cards */
+.summary-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border: none;
+    border-radius: 0.75rem;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card .card-body {
+    padding: 1.25rem;
+}
+
+.summary-card .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.summary-card .stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.summary-card .stat-icon {
+    font-size: 2rem;
+    opacity: 0.15;
+}
+
+/* Property cards */
+.property-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border: none;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.property-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Stage pipeline indicator */
+.stage-pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.stage-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.stage-step .stage-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    z-index: 1;
+}
+
+.stage-step.active .stage-dot {
+    background-color: #0d6efd;
+    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
+}
+
+.stage-step.completed .stage-dot {
+    background-color: #198754;
+}
+
+.stage-step .stage-label {
+    font-size: 0.7rem;
+    color: #6c757d;
+    margin-top: 0.35rem;
+    text-align: center;
+}
+
+.stage-step.active .stage-label {
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+.stage-step.completed .stage-label {
+    color: #198754;
+}
+
+.stage-connector {
+    flex: 1;
+    height: 3px;
+    background-color: #dee2e6;
+    margin-top: -16px;
+}
+
+.stage-connector.completed {
+    background-color: #198754;
+}
+
+/* Progress bar thresholds */
+.progress-bar.bg-budget-ok {
+    background-color: #198754 !important;
+}
+
+.progress-bar.bg-budget-warn {
+    background-color: #ffc107 !important;
+}
+
+.progress-bar.bg-budget-danger {
+    background-color: #dc3545 !important;
+}
+
+/* Schedule cards */
+.schedule-card {
+    border-left: 4px solid #0d6efd;
+    border-radius: 0.5rem;
+    transition: box-shadow 0.15s ease;
+}
+
+.schedule-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.schedule-card.status-completed {
+    border-left-color: #198754;
+    opacity: 0.75;
+}
+
+.schedule-card.status-scheduled {
+    border-left-color: #0dcaf0;
+}
+
+.schedule-card.status-cancelled {
+    border-left-color: #6c757d;
+    opacity: 0.5;
+}
+
+/* Table hover */
+.table-clickable tbody tr {
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+
+.table-clickable tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.04);
+}
+
+/* Navbar brand icon */
+.navbar-brand i {
+    font-size: 1.25rem;
+}
+
+/* Contractor profile card */
+.profile-card {
+    border: none;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}

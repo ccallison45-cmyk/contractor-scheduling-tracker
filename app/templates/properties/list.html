@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Properties — Contractor Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Properties</h2>
+    <span class="text-muted">{{ properties | length }} total</span>
+</div>
+
+<!-- Stage Filter Tabs -->
+<ul class="nav nav-pills mb-4" id="stageFilter">
+    <li class="nav-item">
+        <a class="nav-link active" href="#" data-filter="all">All</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" data-filter="active">Active</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" data-filter="completed">Completed</a>
+    </li>
+</ul>
+
+<div class="row g-4" id="propertyGrid">
+    {% for prop in properties %}
+    <div class="col-md-6 col-lg-4 property-item" data-stage="{{ prop.stage }}">
+        <div class="card property-card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="card-title mb-0">{{ prop.address.split(',')[0] }}</h5>
+                    <span class="badge bg-{{ prop.stage_badge_class }}">{{ prop.stage }}</span>
+                </div>
+                <p class="text-muted small mb-3">{{ prop.address.split(',')[1:] | join(',') }}</p>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span>Budget: ${{ "{:,.0f}".format(prop.budget_total) }}</span>
+                        <span>{{ "{:.0f}".format(prop.budget_percent_used) }}% used</span>
+                    </div>
+                    {% set pct = prop.budget_percent_used %}
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar {% if pct > 95 %}bg-budget-danger{% elif pct > 80 %}bg-budget-warn{% else %}bg-budget-ok{% endif %}"
+                             style="width: {{ [pct, 100] | min }}%"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="small text-muted">
+                        <i class="bi bi-people me-1"></i>{{ prop.active_contractor_count }} active contractor{{ 's' if prop.active_contractor_count != 1 }}
+                    </div>
+                    <a href="/properties/{{ prop.id }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 small text-muted">
+                <i class="bi bi-calendar me-1"></i>Purchased {{ prop.purchase_date.strftime('%b %d, %Y') }}
+                &nbsp;&middot;&nbsp;
+                <i class="bi bi-currency-dollar me-1"></i>${{ "{:,.0f}".format(prop.purchase_price) }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('#stageFilter a').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('#stageFilter a').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+        const filter = this.dataset.filter;
+        document.querySelectorAll('.property-item').forEach(item => {
+            const stage = item.dataset.stage;
+            if (filter === 'all') {
+                item.style.display = '';
+            } else if (filter === 'active') {
+                item.style.display = (stage === 'Sold' || stage === 'Listed') ? 'none' : '';
+            } else if (filter === 'completed') {
+                item.style.display = (stage === 'Listed' || stage === 'Sold') ? '' : 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

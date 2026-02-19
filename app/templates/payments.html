@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Payments — Contractor Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Payments</h2>
+    <span class="text-muted">{{ payments | length }} total</span>
+</div>
+
+<!-- Summary Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card summary-card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value text-success">${{ "{:,.0f}".format(total_paid) }}</div>
+                    <div class="stat-label">Total Paid</div>
+                </div>
+                <i class="bi bi-check-circle stat-icon text-success"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card summary-card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value text-warning">${{ "{:,.0f}".format(total_pending) }}</div>
+                    <div class="stat-label">Total Pending</div>
+                </div>
+                <i class="bi bi-clock stat-icon text-warning"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card summary-card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value text-danger">${{ "{:,.0f}".format(total_overdue) }}</div>
+                    <div class="stat-label">Total Overdue</div>
+                </div>
+                <i class="bi bi-exclamation-triangle stat-icon text-danger"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-body py-2">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <select class="form-select form-select-sm" id="filterProperty">
+                    <option value="">All Properties</option>
+                    {% for prop in properties %}
+                    <option value="{{ prop.id }}">{{ prop.address.split(',')[0] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select form-select-sm" id="filterContractor">
+                    <option value="">All Contractors</option>
+                    {% for c in contractors %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select form-select-sm" id="filterStatus">
+                    <option value="">All Statuses</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Overdue">Overdue</option>
+                </select>
+            </div>
+            <div class="col-md-3 text-end">
+                <button class="btn btn-sm btn-outline-secondary" id="clearFilters">Clear Filters</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payments Table -->
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <table class="table mb-0" id="paymentsTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Due Date</th>
+                    <th>Property</th>
+                    <th>Contractor</th>
+                    <th>Description</th>
+                    <th>Invoice</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr class="{{ payment.row_class }}"
+                    data-property="{{ payment.property_id }}"
+                    data-contractor="{{ payment.contractor_id }}"
+                    data-status="{{ payment.status }}">
+                    <td class="small">
+                        {{ payment.due_date.strftime('%b %d, %Y') }}
+                        {% if payment.paid_date %}
+                        <br><small class="text-muted">Paid {{ payment.paid_date.strftime('%b %d') }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/properties/{{ payment.proj.id }}" class="text-decoration-none">
+                            {{ payment.proj.address.split(',')[0] }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="/contractors/{{ payment.contractor.id }}" class="text-decoration-none">
+                            {{ payment.contractor.name }}
+                        </a>
+                    </td>
+                    <td>{{ payment.description }}</td>
+                    <td class="small text-muted">{{ payment.invoice_number }}</td>
+                    <td class="fw-semibold">${{ "{:,.0f}".format(payment.amount) }}</td>
+                    <td><span class="badge bg-{{ payment.status_badge_class }}">{{ payment.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function applyFilters() {
+    const propFilter = document.getElementById('filterProperty').value;
+    const contFilter = document.getElementById('filterContractor').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+
+    document.querySelectorAll('#paymentsTable tbody tr').forEach(row => {
+        const matchProp = !propFilter || row.dataset.property === propFilter;
+        const matchCont = !contFilter || row.dataset.contractor === contFilter;
+        const matchStatus = !statusFilter || row.dataset.status === statusFilter;
+        row.style.display = (matchProp && matchCont && matchStatus) ? '' : 'none';
+    });
+}
+
+document.getElementById('filterProperty').addEventListener('change', applyFilters);
+document.getElementById('filterContractor').addEventListener('change', applyFilters);
+document.getElementById('filterStatus').addEventListener('change', applyFilters);
+document.getElementById('clearFilters').addEventListener('click', function() {
+    document.getElementById('filterProperty').value = '';
+    document.getElementById('filterContractor').value = '';
+    document.getElementById('filterStatus').value = '';
+    applyFilters();
+});
+</script>
+{% endblock %}

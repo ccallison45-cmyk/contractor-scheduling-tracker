@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Contractor Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Dashboard</h2>
+    <span class="text-muted">Portfolio Overview</span>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card summary-card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value text-primary">{{ active_count }}</div>
+                    <div class="stat-label">Active Projects</div>
+                </div>
+                <i class="bi bi-house stat-icon text-primary"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card summary-card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value text-success">${{ "{:,.0f}".format(total_paid) }}</div>
+                    <div class="stat-label">Total Paid</div>
+                </div>
+                <i class="bi bi-cash-stack stat-icon text-success"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card summary-card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value text-warning">{{ payments_due_count }}</div>
+                    <div class="stat-label">Due This Month</div>
+                    <div class="small text-muted">${{ "{:,.0f}".format(payments_due_amount) }}</div>
+                </div>
+                <i class="bi bi-clock stat-icon text-warning"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card summary-card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    {% if overdue_count > 0 %}
+                    <div class="stat-value text-danger">{{ overdue_count }}</div>
+                    <div class="stat-label">Overdue</div>
+                    <div class="small text-danger">${{ "{:,.0f}".format(overdue_amount) }}</div>
+                    {% else %}
+                    <div class="stat-value text-success">0</div>
+                    <div class="stat-label">Overdue</div>
+                    {% endif %}
+                </div>
+                <i class="bi bi-exclamation-triangle stat-icon text-danger"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Active Properties Table -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="bi bi-house me-2"></i>Properties</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-clickable mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Address</th>
+                            <th>Stage</th>
+                            <th>Budget</th>
+                            <th>Spent</th>
+                            <th style="min-width: 120px;">Usage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prop in properties %}
+                        <tr onclick="window.location='/properties/{{ prop.id }}'">
+                            <td>
+                                <div class="fw-semibold">{{ prop.address.split(',')[0] }}</div>
+                                <small class="text-muted">{{ prop.address.split(',')[1:] | join(',') }}</small>
+                            </td>
+                            <td><span class="badge bg-{{ prop.stage_badge_class }}">{{ prop.stage }}</span></td>
+                            <td>${{ "{:,.0f}".format(prop.budget_total) }}</td>
+                            <td>${{ "{:,.0f}".format(prop.total_committed) }}</td>
+                            <td>
+                                {% set pct = prop.budget_percent_used %}
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar {% if pct > 95 %}bg-budget-danger{% elif pct > 80 %}bg-budget-warn{% else %}bg-budget-ok{% endif %}"
+                                         style="width: {{ [pct, 100] | min }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ "{:.0f}".format(pct) }}%</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Recent Payments</h5>
+                <a href="/payments" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Contractor</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in recent_payments %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ payment.contractor.name }}</div>
+                                <small class="text-muted">{{ payment.proj.address.split(',')[0] }}</small>
+                            </td>
+                            <td>${{ "{:,.0f}".format(payment.amount) }}</td>
+                            <td><span class="badge bg-{{ payment.status_badge_class }}">{{ payment.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Active Contractors -->
+        <div class="card shadow-sm border-0 mt-3">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">Active Contractors</h6>
+                    <small class="text-muted">Currently on-site</small>
+                </div>
+                <div class="stat-value text-primary">{{ active_contractors }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

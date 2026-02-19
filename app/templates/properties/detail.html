@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}{{ property.address.split(',')[0] }} — Contractor Tracker{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/properties">Properties</a></li>
+        <li class="breadcrumb-item active">{{ property.address.split(',')[0] }}</li>
+    </ol>
+</nav>
+
+<!-- Property Header -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h3 class="mb-1">{{ property.address.split(',')[0] }}</h3>
+                <p class="text-muted mb-0">{{ property.address.split(',')[1:] | join(',') }}</p>
+            </div>
+            <span class="badge bg-{{ property.stage_badge_class }} fs-6">{{ property.stage }}</span>
+        </div>
+
+        {% if property.notes %}
+        <p class="mb-3"><i class="bi bi-info-circle me-1"></i>{{ property.notes }}</p>
+        {% endif %}
+
+        <!-- Key Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="border rounded p-3 text-center">
+                    <div class="small text-muted text-uppercase">Purchase Price</div>
+                    <div class="fs-5 fw-bold">${{ "{:,.0f}".format(property.purchase_price) }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 text-center">
+                    <div class="small text-muted text-uppercase">Total Budget</div>
+                    <div class="fs-5 fw-bold">${{ "{:,.0f}".format(property.budget_total) }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 text-center">
+                    <div class="small text-muted text-uppercase">Amount Spent</div>
+                    <div class="fs-5 fw-bold text-{{ 'danger' if property.budget_percent_used > 95 else 'success' }}">${{ "{:,.0f}".format(property.total_committed) }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 text-center">
+                    <div class="small text-muted text-uppercase">Remaining</div>
+                    <div class="fs-5 fw-bold text-{{ 'danger' if property.budget_remaining < 0 else 'success' }}">${{ "{:,.0f}".format(property.budget_remaining) }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage Pipeline -->
+        <div class="stage-pipeline mb-2">
+            {% for stage_name in stages %}
+            {% set idx = loop.index0 %}
+            {% if idx > 0 %}
+            <div class="stage-connector {% if idx <= stage_index %}completed{% endif %}"></div>
+            {% endif %}
+            <div class="stage-step {% if idx < stage_index %}completed{% elif idx == stage_index %}active{% endif %}">
+                <div class="stage-dot">
+                    {% if idx < stage_index %}
+                    <i class="bi bi-check"></i>
+                    {% else %}
+                    {{ idx + 1 }}
+                    {% endif %}
+                </div>
+                <div class="stage-label">{{ stage_name }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between small text-muted mt-2">
+            <span><i class="bi bi-calendar me-1"></i>Purchased: {{ property.purchase_date.strftime('%b %d, %Y') }}</span>
+            <span><i class="bi bi-calendar-check me-1"></i>Expected: {{ property.expected_completion.strftime('%b %d, %Y') }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs: Schedule & Payments -->
+<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#scheduleTab">
+            <i class="bi bi-calendar3 me-1"></i>Contractors & Schedule ({{ property.schedules | length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#paymentsTab">
+            <i class="bi bi-cash-stack me-1"></i>Payments ({{ property.payments | length }})
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Schedule Tab -->
+    <div class="tab-pane fade show active pt-3" id="scheduleTab">
+        <table class="table">
+            <thead class="table-light">
+                <tr>
+                    <th>Contractor</th>
+                    <th>Trade</th>
+                    <th>Scope</th>
+                    <th>Dates</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sched in property.schedules | sort(attribute='start_date') %}
+                <tr>
+                    <td>
+                        <a href="/contractors/{{ sched.contractor.id }}" class="text-decoration-none fw-semibold">
+                            {{ sched.contractor.name }}
+                        </a>
+                    </td>
+                    <td><span class="badge bg-{{ sched.contractor.trade_badge_class }}">{{ sched.contractor.trade }}</span></td>
+                    <td>{{ sched.scope_of_work }}</td>
+                    <td class="small">
+                        {{ sched.start_date.strftime('%b %d') }} — {{ sched.end_date.strftime('%b %d, %Y') }}
+                    </td>
+                    <td><span class="badge bg-{{ sched.status_badge_class }}">{{ sched.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Payments Tab -->
+    <div class="tab-pane fade pt-3" id="paymentsTab">
+        <table class="table">
+            <thead class="table-light">
+                <tr>
+                    <th>Description</th>
+                    <th>Contractor</th>
+                    <th>Invoice</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set total_paid = namespace(val=0) %}
+                {% set total_pending = namespace(val=0) %}
+                {% set total_overdue = namespace(val=0) %}
+                {% for payment in property.payments | sort(attribute='due_date', reverse=true) %}
+                {% if payment.status == 'Paid' %}{% set total_paid.val = total_paid.val + payment.amount %}{% endif %}
+                {% if payment.status == 'Pending' %}{% set total_pending.val = total_pending.val + payment.amount %}{% endif %}
+                {% if payment.status == 'Overdue' %}{% set total_overdue.val = total_overdue.val + payment.amount %}{% endif %}
+                <tr class="{{ payment.row_class }}">
+                    <td>{{ payment.description }}</td>
+                    <td>
+                        <a href="/contractors/{{ payment.contractor.id }}" class="text-decoration-none">
+                            {{ payment.contractor.name }}
+                        </a>
+                    </td>
+                    <td class="small text-muted">{{ payment.invoice_number }}</td>
+                    <td>${{ "{:,.0f}".format(payment.amount) }}</td>
+                    <td class="small">{{ payment.due_date.strftime('%b %d, %Y') }}</td>
+                    <td><span class="badge bg-{{ payment.status_badge_class }}">{{ payment.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-light">
+                <tr>
+                    <td colspan="3" class="text-end fw-bold">Totals:</td>
+                    <td colspan="3">
+                        <span class="badge bg-success me-1">${{ "{:,.0f}".format(total_paid.val) }} Paid</span>
+                        <span class="badge bg-warning me-1">${{ "{:,.0f}".format(total_pending.val) }} Pending</span>
+                        {% if total_overdue.val > 0 %}
+                        <span class="badge bg-danger">${{ "{:,.0f}".format(total_overdue.val) }} Overdue</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}
